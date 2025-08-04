@@ -1,0 +1,64 @@
+﻿@page "/notes"
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@using NewBlazorApps.Models
+
+<h2> Notes</h2>
+
+<input placeholder="Title" @bind="newNote.Title" class="input" />
+<textarea placeholder="Content" @bind="newNote.Content" class="input"></textarea>
+<button @onclick="AddNote">Add Note</button>
+
+<hr />
+
+<div>
+    @foreach (var note in notes)
+    {
+        <div class="note">
+            <strong>@note.Title</strong> <em>@note.CreatedAt.ToShortDateString()</em>
+            <button @onclick="() => DeleteNote(note.Id)">Delete</button>
+            </div>
+    }
+</div>
+
+@code{
+    private List<Note> notes = new();
+    private Note newNote = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        notes = await localStorage.GetItemAsync<List<Note>>("notes") ?? new List<Note>();
+    }
+
+    private async Task AddNote()
+    {
+        if (string.IsNullOrWhiteSpace(newNote.Title) || string.IsNullOrWhiteSpace(newNote.Content))
+            return;
+        newNote.Id = Guid.NewGuid();
+        newNote.CreatedAt = DateTime.Now;
+        notes.Add(newNote);
+        await localStorage.SetItemAsync("notes", notes);
+        newNote = new Note(); // Reset for next input
+    }
+
+    private async Task DeleteNote(Guid id)
+    {
+        notes = notes.Where(n => n.Id != id).ToList();
+        await localStorage.SetItemAsync("notes", notes);
+    }
+}
+
+<style>
+    .input {
+        display: block;
+        margin: 0.5rem 0;
+        padding: 0.5rem;
+        width: 100%;
+    }
+
+    .note {
+        border: 1px solid #ccc;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+    }
+</style>

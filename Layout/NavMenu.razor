@@ -1,0 +1,77 @@
+﻿@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+@* <div class="nav-links">
+    <NavLink href="notes" Match="NavLinkMatch.All">Notes</NavLink>
+    <NavLink href="budget">Budget Tracker</NavLink>
+    <NavLink href="habit">Habit</NavLink>
+   
+</div> *@
+<div class="nav-links" >
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink href="notes" Match="NavLinkMatch.All">📝Notes</NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink href="budget">💸 Budget Tracker</NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink href="habit">📆Habit</NavLink>
+        </div>
+    </nav>
+</div>
+
+
+
+
+<button @onclick="ToggleDarkMode">
+    @(isDarkMode ? "🌙 Dark Mode" : "🌞 Light Mode")
+</button>
+
+<style>
+    .nav-menu{
+    background: var(--nav-bg);
+    padding: 0.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    }
+    .nav-menu a, .nav-menu button{
+    color:var(--nav-text);
+    text-decoration: none;
+    font-weight: bold;
+    background: none;
+    border: none;
+    cursor: pointer;
+    }
+
+    .nav-menu button.dark-toggle:hover{
+    text-decoration: underline;
+    }
+</style>
+
+@code{
+    private bool isDarkMode;
+    protected override async Task OnInitializedAsync()
+    {
+        isDarkMode = await LocalStorage.GetItemAsync<bool>("isDarkMode");
+        await SetDarkModeClass();
+    }
+
+    private async Task ToggleDarkMode()
+    {
+        isDarkMode = !isDarkMode;
+        await LocalStorage.SetItemAsync("isDarkMode", isDarkMode);
+        await SetDarkModeClass();
+    }
+
+    private async Task SetDarkModeClass()
+    {
+        var body = await JS.InvokeAsync<IJSObjectReference>("import", "./js/bodyClassHelper.js");
+        await body.InvokeVoidAsync("setDarkModeClass", isDarkMode);
+    }
+
+    [Inject]
+    private IJSRuntime JS { get; set; }
+}

@@ -1,0 +1,45 @@
+﻿body {
+}
+:root {
+    --nav-bg: #333;
+    --nav-text: white;
+    --bg-color: white;
+    --text-color: black;
+}
+.nav-links {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-right: auto;
+}
+
+    .nav-links a {
+        text-decoration: none;
+        color: inherit;
+        font-weight: 600;
+    }
+body.dark-mode {
+    --nav-bg: #222;
+    --nav-text: #eee;
+    --bg-color: #121212;
+    --text-color: #eee;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+}
+    body.dark {
+        background-color: #121212;
+        color: #f0f0f0;
+    }
+
+        body.dark a {
+            color: #90caf9;
+        }
+
+    body.dark-mode {
+        background-color: #121212;
+        color: #f0f0f0;
+    }

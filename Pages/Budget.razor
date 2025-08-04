@@ -1,0 +1,87 @@
+﻿@page "/budget"
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@using NewBlazorApps.Models
+
+<h2>Budget Tracker</h2>
+
+<div class="form-group">
+    <input placeholder="Description" @bind="newTransaction.Description" class="input" />
+    <input placeholder="Amount" type="number" @bind="newTransaction.Amount" class="input" />
+    <InputSelect @bind-Value="newTransaction.IsIncome" class="input">
+        <option value="">-- Select Type --</option>
+        <option value=true>Income</option>
+        <option value=false>Expense</option>
+    </InputSelect>
+    <button @onclick="AddTransaction">Add</button>
+</div>
+
+<hr />
+
+<h3>Balance: <strong>@Balance.ToString("C")</strong></h3>
+
+@foreach (var item in transactions.OrderByDescending(t => t.Date))
+{
+    <div class="transaction @(item.IsIncome ?? false ? "income" : "expense")">
+        <strong>@item.Description</strong> - @item.Amount.ToString("C") (@item.Date.ToShortDateString())
+        <button @onclick="() => DeleteTransaction(item.Id)">Delete</button>
+    </div>
+}
+
+@code {
+    private List<Transaction> transactions = new();
+    private Transaction newTransaction = new();
+    public bool? IsIncome { get; set; }
+
+    private decimal Balance => transactions.Sum(t => (t.IsIncome ?? false) ? t.Amount : -t.Amount);
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        transactions = await LocalStorage.GetItemAsync<List<Transaction>>("transactions") ?? new List<Transaction>();
+    }
+
+    private async Task AddTransaction()
+    {
+        if (string.IsNullOrWhiteSpace(newTransaction.Description) || newTransaction.Amount <= 0)
+            return;
+
+        newTransaction.Id = Guid.NewGuid();
+        newTransaction.Date = DateTime.Now;
+        transactions.Add(newTransaction);
+        await LocalStorage.SetItemAsync("transactions", transactions);
+
+        newTransaction = new Transaction(); // Reset form
+    }
+
+    private async Task DeleteTransaction(Guid id)
+    {
+        transactions = transactions.Where(t => t.Id != id).ToList();
+        await LocalStorage.SetItemAsync("transactions", transactions);
+    }
+}
+
+            <style>
+    .input {
+        display: block;
+        margin: 0.5rem 0;
+        padding: 0.5rem;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .transaction {
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        max-width: 400px;
+    }
+
+    .income {
+        background-color: #e6ffed;
+    }
+
+    .expense {
+        background-color: #ffe6e6;
+    }
+            </style>

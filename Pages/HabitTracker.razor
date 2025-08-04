@@ -1,0 +1,95 @@
+﻿@page "/habit"
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@using NewBlazorApps.Models
+
+<h2> Habit Tracker</h2>
+
+<input placeholder="New habit" @bind="newHabitName" class="input" />
+<button @onclick="AddHabit">Add Habit</button>
+
+<hr />
+
+@foreach (var habit in habits)
+{
+    <div class="habit">
+        <strong>@habit.Name</strong>
+        <div class="days">
+            @foreach (var day in weekDays)
+            {
+                <label>
+                    <input type="checkbox" @bind="habit.Completion[day]" @bind:after="() => SaveHabits()" />
+                    @day.Substring(5)
+                </label>
+            }
+        </div>
+        <button @onclick="() => DeleteHabit(habit.Id)">Delete</button>
+    </div>
+}
+
+@code {
+    private string newHabitName = string.Empty;
+    private List<Habit> habits = new();
+    private List<string> weekDays = Enumerable.Range(0, 7)
+        .Select(i => DateTime.Today.AddDays(-i).ToString("yyyy-MM-dd"))
+        .Reverse()
+        .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        habits = await localStorage.GetItemAsync<List<Habit>>("habits") ?? new List<Habit>();
+        foreach (var habit in habits)
+        {
+            foreach (var day in weekDays)
+            {
+                if (!habit.Completion.ContainsKey(day))
+                    habit.Completion[day] = false;
+            }
+        }
+    }
+
+    private async Task AddHabit()
+    {
+        if (string.IsNullOrWhiteSpace(newHabitName)) return;
+
+        var habit = new Habit
+            {
+                Name = newHabitName,
+                Completion = weekDays.ToDictionary(day => day, day => false)
+            };
+
+        habits.Add(habit);
+        newHabitName = string.Empty;
+        await SaveHabits();
+    }
+
+    private async Task DeleteHabit(Guid id)
+    {
+        habits = habits.Where(h => h.Id != id).ToList();
+        await SaveHabits();
+    }
+
+    private async Task SaveHabits()
+    {
+        await localStorage.SetItemAsync("habits", habits);
+    }
+}
+
+<style>
+    .input {
+        display: block;
+        margin: 0.5rem 0;
+        padding: 0.5rem;
+        width: 100%;
+    }
+
+    .habit {
+        border: 1px solid #ccc;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+    }
+
+    .days label {
+        margin-right: 0.5rem;
+    }
+</style>
